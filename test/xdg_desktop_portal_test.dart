@@ -830,6 +830,13 @@ class MockPortalDocumentsObject extends DBusObject {
         }
         return DBusMethodSuccessResponse(
             [DBusArray.string(docIds), DBusDict.stringVariant({})]);
+      case 'AddNamed':
+        var pathHandle = methodCall.values[0].asUnixFd();
+        var path = methodCall.values[2].asByteArray();
+        var reuseExisting = methodCall.values[2].asBoolean();
+        var persistent = methodCall.values[3].asBoolean();
+        var docId = server.addDocument(MockDocument(Uint8List(0)));
+        return DBusMethodSuccessResponse([DBusString(docId)]);
       case 'GrantPermissions':
         var docId = methodCall.values[0].asString();
         var appId = methodCall.values[1].asString();
@@ -1266,6 +1273,8 @@ void main() {
               Uint8List.fromList(utf8.encode('/home/example/image.png')))
         }));
   });
+
+  test('documents - add named', () async {});
 
   test('documents - permissions', () async {
     var server = DBusServer();

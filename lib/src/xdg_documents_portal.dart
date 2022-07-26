@@ -76,6 +76,24 @@ class XdgDocumentsPortal {
     return result.returnValues[0].asStringArray().toList();
   }
 
+  /// Creates an entry in the document store for writing a new file.
+  /// Returns the document ID for this document.
+  /// FIXME: Implement AddNamedFull
+  Future<String> addNamed(ResourceHandle directory, Uint8List filename,
+      {bool reuseExisting = false, bool persistent = false}) async {
+    var result = await _object.callMethod(
+        'org.freedesktop.portal.Documents',
+        'AddNamed',
+        [
+          DBusUnixFd(directory),
+          DBusArray.byte(filename),
+          DBusBoolean(reuseExisting),
+          DBusBoolean(persistent)
+        ],
+        replySignature: DBusSignature('s'));
+    return result.returnValues[0].asString();
+  }
+
   /// Grants access permissions for a file with [docId] to the application with [appId].
   Future<void> grantPermissions(String docId, String appId,
       Set<XdgDocumentPermission> permissions) async {
