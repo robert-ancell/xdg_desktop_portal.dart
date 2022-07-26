@@ -853,6 +853,14 @@ class MockPortalDocumentsObject extends DBusObject {
         var docId = methodCall.values[0].asString();
         server.documents.remove(docId);
         return DBusMethodSuccessResponse();
+      case 'List':
+        return DBusMethodSuccessResponse([
+          DBusDict(
+              DBusSignature('s'),
+              DBusSignature('ay'),
+              server.documents.map((docId, document) =>
+                  MapEntry(DBusString(docId), DBusArray.byte(document.path))))
+        ]);
       default:
         return DBusMethodErrorResponse.unknownMethod();
     }
@@ -1357,6 +1365,36 @@ void main() {
           '123457': MockDocument(
               Uint8List.fromList(utf8.encode('/home/example/README.md')))
         }));
+  });
+
+  test('documents - list', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+    addTearDown(() async {
+      await server.close();
+    });
+
+    var portalServer = MockPortalDocumentsServer(clientAddress, documents: {
+      '123456': MockDocument(
+          Uint8List.fromList(utf8.encode('/home/example/image.png'))),
+      '123457': MockDocument(
+          Uint8List.fromList(utf8.encode('/home/example/README.md')))
+    });
+    await portalServer.start();
+    addTearDown(() async {
+      await portalServer.close();
+    });
+
+    var client = XdgDesktopPortalClient(bus: DBusClient(clientAddress));
+    addTearDown(() async {
+      await client.close();
+    });
+
+    var documents = await client.documents.list();
+    expect(documents.keys, equals(['123456', '123457']));
+    expect(documents['123456']?.path, equals('/home/example/image.png'));
+    expect(documents['123457']?.path, equals('/home/example/README.md'));
   });
 
   test('email', () async {

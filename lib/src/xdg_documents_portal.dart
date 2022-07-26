@@ -110,4 +110,16 @@ class XdgDocumentsPortal {
         'org.freedesktop.portal.Documents', 'Delete', [DBusString(docId)],
         replySignature: DBusSignature(''));
   }
+
+  /// Lists documents in the document store.
+  /// If [appId] is provided then only documents for the given application are returned.
+  /// Returns a mapping of document IDs to file system paths.
+  Future<Map<String, File>> list({String appId = ''}) async {
+    var result = await _object.callMethod(
+        'org.freedesktop.portal.Documents', 'List', [DBusString(appId)],
+        replySignature: DBusSignature('a{say}'));
+    return result.returnValues[0].asDict().map((key, value) => MapEntry(
+        key.asString(),
+        File.fromRawPath(Uint8List.fromList(value.asByteArray().toList()))));
+  }
 }

@@ -68,6 +68,14 @@ void main(List<String> args) async {
         await client.documents.delete(docId);
       }
       break;
+    case 'list':
+      var docs = await client.documents.list();
+      for (var entry in docs.entries) {
+        var id = entry.key;
+        var path = entry.value;
+        print('$id ${utf8.decode(path)}');
+      }
+      break;
     default:
       usage();
       break;
