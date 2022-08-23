@@ -141,6 +141,12 @@ class MockEmail {
   String toString() => '$runtimeType($parentWindow, $options)';
 }
 
+class MockFileTransfer {
+  final Map<String, DBusValue> options;
+
+  MockFileTransfer(this.options);
+}
+
 class MockUri {
   final String parentWindow;
   final String uri;
@@ -905,6 +911,27 @@ class MockPortalDocumentsObject extends DBusObject {
   Future<DBusMethodResponse> handleFileTransferMethodCall(
       DBusMethodCall methodCall) async {
     switch (methodCall.name) {
+      case 'StartTransfer':
+        var options = methodCall.values[0].asStringVariantDict();
+        var key = server.addFileTransfer(MockFileTransfer(options));
+        return DBusMethodSuccessResponse([DBusString(key)]);
+      case 'AddFiles':
+        var key = methodCall.values[0].asString();
+        var handles = methodCall.values[1].asUnixFdArray();
+        var options = methodCall.values[2].asStringVariantDict();
+        var fileTransfer = server.fileTransfers[key];
+        return DBusMethodSuccessResponse();
+      case 'RetrieveFiles':
+        var key = methodCall.values[0].asString();
+        var options = methodCall.values[1].asStringVariantDict();
+        var files = <String>[];
+        var fileTransfer = server.fileTransfers[key];
+        // FIXME: close unless autostop has been set
+        return DBusMethodSuccessResponse([DBusArray.string(files)]);
+      case 'StopTransfer':
+        var key = methodCall.values[0].asString();
+        server.fileTransfers.remove(key);
+        return DBusMethodSuccessResponse();
       default:
         return DBusMethodErrorResponse.unknownMethod();
     }
@@ -1069,6 +1096,7 @@ class MockPortalDocumentsServer extends DBusClient {
 
   final Uint8List? mountPoint;
   late final Map<String, MockDocument> documents;
+  final fileTransfers = <String, MockFileTransfer>{};
 
   MockPortalDocumentsServer(DBusAddress clientAddress,
       {this.mountPoint, Map<String, MockDocument>? documents})
@@ -1091,6 +1119,16 @@ class MockPortalDocumentsServer extends DBusClient {
         return token;
       }
     }
+  }
+
+  String addFileTransfer(MockFileTransfer fileTransfer) {
+    final random = Random();
+    String key;
+    do {
+      key = '${random.nextInt(1 << 32)}';
+    } while (fileTransfers.containsKey(key));
+    fileTransfers[key] = fileTransfer;
+    return key;
   }
 }
 
