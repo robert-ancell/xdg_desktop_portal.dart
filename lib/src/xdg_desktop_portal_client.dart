@@ -105,7 +105,7 @@ class XdgDesktopPortalClient {
     networkMonitor = XdgNetworkMonitorPortal(_desktopObject);
     notification = XdgNotificationPortal(_desktopObject);
     openUri = XdgOpenUriPortal(_desktopObject, _generateToken);
-    print = XdgPrintPortal(_desktopObject);
+    print = XdgPrintPortal(_desktopObject, _generateToken);
     proxyResolver = XdgProxyResolverPortal(_desktopObject);
     remoteDesktop = XdgRemoteDesktopPortal(_desktopObject);
     screenCast = XdgScreenCastPortal(_desktopObject);
